@@ -42,7 +42,7 @@ public final class ConjureLocalPlugin implements Plugin<Project> {
     private static final String PYTHON_PROJECT_NAME = "python";
     private static final String TYPESCRIPT_PROJECT_NAME = "typescript";
     private static final ImmutableSet<String> FIRST_CLASS_GENERATOR_PROJECT_NAMES = ImmutableSet.of(
-            PYTHON_PROJECT_NAME, TYPESCRIPT_PROJECT_NAME);
+            JAVA_PROJECT_NAME, PYTHON_PROJECT_NAME, TYPESCRIPT_PROJECT_NAME);
     private static final String CONJURE_GENERATOR_DEP_PREFIX = "conjure-";
 
     @Override
