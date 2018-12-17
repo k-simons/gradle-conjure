@@ -152,12 +152,12 @@ public final class ConjureLocalPlugin implements Plugin<Project> {
 
         ExtractExecutableTask extractConjureJavaTask = ExtractExecutableTask.createExtractTask(
                 project,
-                "extractConjureJava",
+                "extractLocalConjureJava",
                 conjureJavaConfig,
                 conjureJavaDir,
                 "conjure-java");
 
-        project.getTasks().create("generateJava", ConjureLocalGenerateTask.class, task -> {
+        project.getTasks().create("generateLocalJava", ConjureLocalGenerateTask.class, task -> {
             task.setDescription("Generates Java files from remote Conjure definitions.");
             task.setGroup(ConjurePlugin.TASK_GROUP);
             task.setSource(conjureIrConfiguration);
