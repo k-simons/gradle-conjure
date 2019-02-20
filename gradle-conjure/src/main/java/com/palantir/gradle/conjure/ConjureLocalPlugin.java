@@ -38,10 +38,11 @@ public final class ConjureLocalPlugin implements Plugin<Project> {
     /** Configuration where custom generators should be added as dependencies. */
     private static final String CONJURE_GENERATORS_CONFIGURATION_NAME = "conjureGenerators";
 
+    private static final String JAVA_PROJECT_NAME = "java";
     private static final String PYTHON_PROJECT_NAME = "python";
     private static final String TYPESCRIPT_PROJECT_NAME = "typescript";
     private static final ImmutableSet<String> FIRST_CLASS_GENERATOR_PROJECT_NAMES = ImmutableSet.of(
-            PYTHON_PROJECT_NAME, TYPESCRIPT_PROJECT_NAME);
+            JAVA_PROJECT_NAME, PYTHON_PROJECT_NAME, TYPESCRIPT_PROJECT_NAME);
     private static final String CONJURE_GENERATOR_DEP_PREFIX = "conjure-";
 
     @Override
@@ -58,6 +59,8 @@ public final class ConjureLocalPlugin implements Plugin<Project> {
                     + "from remote Conjure definitions.");
             task.setGroup(ConjurePlugin.TASK_GROUP);
         });
+        setupConjureJava(
+                project, immutableOptionsSupplier(extension::getJava), conjureIrConfiguration, generateConjure);
         setupConjurePython(
                 project, immutableOptionsSupplier(extension::getPython), conjureIrConfiguration, generateConjure);
         setupConjureTypeScript(
@@ -132,6 +135,38 @@ public final class ConjureLocalPlugin implements Plugin<Project> {
                                     });
                     generateConjure.dependsOn(conjureLocalGenerateTask);
                 });
+    }
+
+    private void setupConjureJava(
+            Project project,
+            Supplier<GeneratorOptions> optionsSupplier,
+            Configuration conjureIrConfiguration,
+            Task generateConjure) {
+        Project subproj = project.findProject(JAVA_PROJECT_NAME);
+        if (subproj == null) {
+            return;
+        }
+        Configuration conjureJavaConfig = project.getConfigurations().maybeCreate(ConjurePlugin.CONJURE_JAVA);
+        File conjureJavaDir = new File(project.getBuildDir(), ConjurePlugin.CONJURE_JAVA);
+        project.getDependencies().add(ConjurePlugin.CONJURE_JAVA, ConjurePlugin.CONJURE_JAVA_BINARY);
+
+        ExtractExecutableTask extractConjureJavaTask = ExtractExecutableTask.createExtractTask(
+                project,
+                "extractLocalConjureJava",
+                conjureJavaConfig,
+                conjureJavaDir,
+                "conjure-java");
+
+        project.getTasks().create("generateLocalJava", ConjureLocalGenerateTask.class, task -> {
+            task.setDescription("Generates Java files from remote Conjure definitions.");
+            task.setGroup(ConjurePlugin.TASK_GROUP);
+            task.setSource(conjureIrConfiguration);
+            task.setExecutablePath(extractConjureJavaTask::getExecutable);
+            task.setOutputDirectory(subproj.file("java"));
+            task.setOptions(() -> optionsSupplier.get().addFlag("rawSource"));
+            task.dependsOn(extractConjureJavaTask);
+            generateConjure.dependsOn(task);
+        });
     }
 
     private void setupConjurePython(
